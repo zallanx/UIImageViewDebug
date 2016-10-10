@@ -15,6 +15,8 @@
 		6F49602C1DA2C9DF0001A2C4 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 6F49602A1DA2C9DF0001A2C4 /* LaunchScreen.storyboard */; };
 		6F4960371DA2C9E00001A2C4 /* PhotoTakingTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F4960361DA2C9E00001A2C4 /* PhotoTakingTests.m */; };
 		6F4960421DA2C9E00001A2C4 /* PhotoTakingUITests.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F4960411DA2C9E00001A2C4 /* PhotoTakingUITests.m */; };
+		6F4960511DA2E3750001A2C4 /* TakePhotoViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F4960501DA2E3750001A2C4 /* TakePhotoViewController.m */; };
+		6F4960531DA304320001A2C4 /* overlayView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 6F4960521DA304320001A2C4 /* overlayView.xib */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -51,6 +53,9 @@
 		6F49603D1DA2C9E00001A2C4 /* PhotoTakingUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PhotoTakingUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		6F4960411DA2C9E00001A2C4 /* PhotoTakingUITests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PhotoTakingUITests.m; sourceTree = "<group>"; };
 		6F4960431DA2C9E00001A2C4 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		6F49604F1DA2E3750001A2C4 /* TakePhotoViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TakePhotoViewController.h; sourceTree = "<group>"; };
+		6F4960501DA2E3750001A2C4 /* TakePhotoViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TakePhotoViewController.m; sourceTree = "<group>"; };
+		6F4960521DA304320001A2C4 /* overlayView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = overlayView.xib; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -106,7 +111,10 @@
 				6F4960221DA2C9DF0001A2C4 /* ViewController.h */,
 				6F4960231DA2C9DF0001A2C4 /* ViewController.m */,
 				6F4960251DA2C9DF0001A2C4 /* Main.storyboard */,
+				6F49604F1DA2E3750001A2C4 /* TakePhotoViewController.h */,
+				6F4960501DA2E3750001A2C4 /* TakePhotoViewController.m */,
 				6F4960281DA2C9DF0001A2C4 /* Assets.xcassets */,
+				6F4960521DA304320001A2C4 /* overlayView.xib */,
 				6F49602A1DA2C9DF0001A2C4 /* LaunchScreen.storyboard */,
 				6F49602D1DA2C9DF0001A2C4 /* Info.plist */,
 				6F49601C1DA2C9DF0001A2C4 /* Supporting Files */,
@@ -207,6 +215,7 @@
 				TargetAttributes = {
 					6F4960181DA2C9DF0001A2C4 = {
 						CreatedOnToolsVersion = 8.0;
+						DevelopmentTeam = 425NYQD499;
 						ProvisioningStyle = Automatic;
 					};
 					6F4960311DA2C9E00001A2C4 = {
@@ -247,6 +256,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				6F49602C1DA2C9DF0001A2C4 /* LaunchScreen.storyboard in Resources */,
+				6F4960531DA304320001A2C4 /* overlayView.xib in Resources */,
 				6F4960291DA2C9DF0001A2C4 /* Assets.xcassets in Resources */,
 				6F4960271DA2C9DF0001A2C4 /* Main.storyboard in Resources */,
 			);
@@ -275,6 +285,7 @@
 			files = (
 				6F4960241DA2C9DF0001A2C4 /* ViewController.m in Sources */,
 				6F4960211DA2C9DF0001A2C4 /* AppDelegate.m in Sources */,
+				6F4960511DA2E3750001A2C4 /* TakePhotoViewController.m in Sources */,
 				6F49601E1DA2C9DF0001A2C4 /* main.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -424,6 +435,9 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				DEBUG_ACTIVITY_MODE = "";
+				"DEBUG_ACTIVITY_MODE[sdk=iphonesimulator*]" = disable;
+				DEVELOPMENT_TEAM = 425NYQD499;
 				INFOPLIST_FILE = PhotoTaking/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.echeloncreative.PhotoTaking;
@@ -435,6 +449,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				DEBUG_ACTIVITY_MODE = "";
+				DEVELOPMENT_TEAM = 425NYQD499;
 				INFOPLIST_FILE = PhotoTaking/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.echeloncreative.PhotoTaking;

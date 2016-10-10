@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="11201" systemVersion="16A323" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" colorMatched="YES">
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="11161"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="TakePhotoViewController">
+            <connections>
+                <outlet property="overlayView" destination="1" id="wrN-My-4RA"/>
+            </connections>
+        </placeholder>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <view contentMode="scaleToFill" id="1">
+            <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
+            <autoresizingMask key="autoresizingMask" flexibleMinX="YES" widthSizable="YES" flexibleMaxX="YES" flexibleMinY="YES" heightSizable="YES" flexibleMaxY="YES"/>
+            <subviews>
+                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="nFA-wZ-ott">
+                    <constraints>
+                        <constraint firstAttribute="height" constant="50" id="1sN-Y0-HJI"/>
+                        <constraint firstAttribute="width" constant="50" id="ub9-oz-gJy"/>
+                    </constraints>
+                    <fontDescription key="fontDescription" type="system" pointSize="15"/>
+                    <state key="normal" image="flashOff-1">
+                        <color key="titleShadowColor" red="0.5" green="0.5" blue="0.5" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                    </state>
+                    <state key="selected" image="cameraOn"/>
+                    <connections>
+                        <action selector="didTapFlashSwitch:" destination="-1" eventType="touchUpInside" id="c6A-DZ-uER"/>
+                    </connections>
+                </button>
+                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="E1h-kD-NQg">
+                    <constraints>
+                        <constraint firstAttribute="width" constant="50" id="B2l-hO-SiO"/>
+                        <constraint firstAttribute="height" constant="50" id="sBp-ec-tS1"/>
+                    </constraints>
+                    <fontDescription key="fontDescription" type="system" pointSize="15"/>
+                    <color key="tintColor" red="0.0" green="0.0" blue="0.0" alpha="0.0" colorSpace="custom" customColorSpace="sRGB"/>
+                    <state key="normal" image="cameraTurn">
+                        <color key="titleShadowColor" red="0.5" green="0.5" blue="0.5" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                    </state>
+                    <connections>
+                        <action selector="didTapCameraTurn:" destination="-1" eventType="touchUpInside" id="6cp-qJ-b66"/>
+                    </connections>
+                </button>
+                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="I4x-Mf-Mo0">
+                    <constraints>
+                        <constraint firstAttribute="height" constant="50" id="CDx-K9-yG4"/>
+                        <constraint firstAttribute="width" constant="50" id="egG-mZ-T3F"/>
+                    </constraints>
+                    <fontDescription key="fontDescription" type="system" pointSize="15"/>
+                    <state key="normal" image="goback">
+                        <color key="titleShadowColor" red="0.5" green="0.5" blue="0.5" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                    </state>
+                    <connections>
+                        <action selector="didTapOnBack:" destination="-1" eventType="touchUpInside" id="aaj-OK-ZFs"/>
+                    </connections>
+                </button>
+                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="zd2-xu-GNO">
+                    <constraints>
+                        <constraint firstAttribute="height" constant="50" id="f8s-TT-Pmy"/>
+                        <constraint firstAttribute="width" constant="50" id="xc4-ZK-Hha"/>
+                    </constraints>
+                    <fontDescription key="fontDescription" type="system" pointSize="15"/>
+                    <state key="normal" image="photoLibrary">
+                        <color key="titleShadowColor" red="0.5" green="0.5" blue="0.5" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                    </state>
+                    <connections>
+                        <action selector="didTapOnPhotosSelection:" destination="-1" eventType="touchUpInside" id="UyY-Ik-WuO"/>
+                    </connections>
+                </button>
+                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="uU1-AZ-Hpj">
+                    <constraints>
+                        <constraint firstAttribute="width" constant="80" id="GLz-nO-TvV"/>
+                        <constraint firstAttribute="height" constant="80" id="yKs-Bs-QZf"/>
+                    </constraints>
+                    <fontDescription key="fontDescription" type="system" pointSize="15"/>
+                    <state key="normal" image="cameraButton40">
+                        <color key="titleShadowColor" red="0.5" green="0.5" blue="0.5" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                    </state>
+                    <state key="highlighted" image="cameraButtonPressed"/>
+                    <connections>
+                        <action selector="didTapOnTakePhoto:" destination="-1" eventType="touchUpInside" id="sVN-ic-NnN"/>
+                    </connections>
+                </button>
+            </subviews>
+            <constraints>
+                <constraint firstAttribute="trailing" secondItem="E1h-kD-NQg" secondAttribute="trailing" constant="6" id="2fV-Eb-2cH"/>
+                <constraint firstItem="nFA-wZ-ott" firstAttribute="top" secondItem="1" secondAttribute="top" constant="5" id="Csv-X4-jEL"/>
+                <constraint firstAttribute="bottom" secondItem="uU1-AZ-Hpj" secondAttribute="bottom" constant="10" id="FP0-La-lhV"/>
+                <constraint firstItem="E1h-kD-NQg" firstAttribute="top" secondItem="1" secondAttribute="top" constant="5" id="GYx-gJ-BgZ"/>
+                <constraint firstItem="I4x-Mf-Mo0" firstAttribute="leading" secondItem="1" secondAttribute="leading" constant="6" id="GuQ-Dx-mt2"/>
+                <constraint firstItem="uU1-AZ-Hpj" firstAttribute="centerX" secondItem="1" secondAttribute="centerX" id="LJ2-QW-NG1"/>
+                <constraint firstItem="uU1-AZ-Hpj" firstAttribute="bottom" secondItem="zd2-xu-GNO" secondAttribute="bottom" id="QeS-N2-3eH"/>
+                <constraint firstAttribute="bottom" secondItem="zd2-xu-GNO" secondAttribute="bottom" constant="10" id="VVx-TM-Wch"/>
+                <constraint firstItem="nFA-wZ-ott" firstAttribute="leading" secondItem="1" secondAttribute="leading" constant="6" id="bgx-Fp-geb"/>
+                <constraint firstAttribute="trailing" secondItem="zd2-xu-GNO" secondAttribute="trailing" constant="6" id="iSV-r2-44H"/>
+                <constraint firstAttribute="bottom" secondItem="I4x-Mf-Mo0" secondAttribute="bottom" constant="10" id="jJn-eJ-9Dv"/>
+            </constraints>
+            <nil key="simulatedStatusBarMetrics"/>
+        </view>
+    </objects>
+    <resources>
+        <image name="cameraButton40" width="80" height="80"/>
+        <image name="cameraButtonPressed" width="80" height="80"/>
+        <image name="cameraOn" width="50" height="50"/>
+        <image name="cameraTurn" width="50" height="50"/>
+        <image name="flashOff-1" width="50" height="50"/>
+        <image name="goback" width="50" height="50"/>
+        <image name="photoLibrary" width="50" height="50"/>
+    </resources>
+    <simulatedMetricsContainer key="defaultSimulatedMetrics">
+        <simulatedStatusBarMetrics key="statusBar"/>
+        <simulatedOrientationMetrics key="orientation"/>
+        <simulatedScreenMetrics key="destination" type="retina4_7.fullscreen"/>
+    </simulatedMetricsContainer>
+</document>

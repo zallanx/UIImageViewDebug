@@ -10,6 +10,7 @@
 
 @interface ViewController : UIViewController
 
+- (IBAction)photoAction:(UIButton *)sender;
 
 @end
 
