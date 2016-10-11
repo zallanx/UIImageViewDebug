@@ -24,8 +24,7 @@
 // added by Raymond
 @property (strong, nonatomic) UIView* containerView;
 @property (strong, nonatomic) UIImageView* originalImageView;
-@property (strong, nonatomic) UIView* dimView;
-@property (strong, nonatomic) UIImageView* croppedImageView;
+@property (strong, nonatomic) UIImageView* dimView;
 
 @end
 
@@ -43,6 +42,7 @@
     [self initUIViews];
     [self initGestureRecognizersTo:self.originalImageView withTag:TAG_FOR_TOUCHING];
     
+    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Save" style:(UIBarButtonItemStyleDone) target:self action:@selector(onSave:)];
 }
 
 
@@ -119,7 +119,7 @@
     NSLog(@"%@", self.takenOrSelectedImage);
     [self.imagePickerController dismissViewControllerAnimated:YES completion:nil];
     
-    [self applyMoonCrop];
+    //    [self applyMoonCrop];
 }
 
 - (void)imagePickerControllerDidCancel:(UIImagePickerController *)picker
@@ -144,15 +144,6 @@
 
 - (void)initUIViews {
     
-    // create necessary views
-    // see storyboard as reference
-    /*
-     containerView
-     originalImageView
-     dimView
-     croppedImageView
-     */
-    
     self.containerView = [[UIView alloc] initWithFrame:self.view.bounds];
     self.containerView.backgroundColor = [UIColor clearColor];
     [self.view addSubview:self.containerView];
@@ -162,15 +153,10 @@
     self.originalImageView.userInteractionEnabled = YES;
     [self.containerView addSubview:self.originalImageView];
     
-    self.dimView = [[UIView alloc] initWithFrame:self.view.bounds];
-    self.dimView.backgroundColor = [UIColor colorWithWhite:0 alpha:0.6];
+    self.dimView = [[UIImageView alloc] initWithFrame:self.view.bounds];
+    self.dimView.contentMode = UIViewContentModeScaleAspectFit;
     self.dimView.userInteractionEnabled = NO;
     [self.view addSubview:self.dimView];
-    
-    self.croppedImageView = [[UIImageView alloc] initWithFrame:self.view.bounds];
-    self.croppedImageView.contentMode = UIViewContentModeScaleAspectFit;
-    self.croppedImageView.userInteractionEnabled = NO;
-    [self.view addSubview:self.croppedImageView];
 }
 
 - (void)initGestureRecognizersTo:(UIView*)view withTag:(int)tag {
@@ -190,9 +176,7 @@
     self.containerView.frame = self.view.bounds;
     self.originalImageView.frame = self.containerView.bounds;
     self.dimView.frame = self.view.bounds;
-    self.croppedImageView.frame = self.view.bounds;
-    
-    [self applyMoonCrop];
+    self.dimView.image = [self reverseMaskImage:[UIImage imageNamed:@"rounder"] toSize:self.dimView.bounds.size];
 }
 
 //Touch methods for panning image
@@ -202,7 +186,6 @@
     UITouch *touch = [touches anyObject];
     if([touch.view isKindOfClass:[UIImageView class]] && touch.view.tag == TAG_FOR_TOUCHING){
         previousLocation = [touch locationInView:self.view];
-        //[self applyMaskToImage];
     }
     
 }
@@ -221,9 +204,6 @@
                                                     self.originalImageView.center.y + yDistanceFromBefore);
         
         previousLocation = location;
-        [self applyMoonCrop];
-        //        [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(applyMoonCrop) object:nil];
-        //        [self performSelector:@selector(applyMoonCrop) withObject:nil afterDelay:0.05];
     }
 }
 
@@ -232,69 +212,206 @@
     UITouch *touch = [touches anyObject];
     if([touch.view isKindOfClass:[UIImageView class]] && touch.view.tag == 1){
         previousLocation = [touch locationInView:self.view];
-        [self applyMoonCrop];
     }
-}
-
-- (void)touchesCancelled:(NSSet<UITouch *> *)touches withEvent:(nullable UIEvent *)event {
-    [self applyMoonCrop];
-}
-
-- (void)touchesEstimatedPropertiesUpdated:(NSSet<UITouch *> *)touches NS_AVAILABLE_IOS(9_1) {
-    [self applyMoonCrop];
 }
 
 - (void)pinchedOnImage: (UIPinchGestureRecognizer *)sender
 {
     self.originalImageView.transform = CGAffineTransformScale(self.originalImageView.transform, sender.scale, sender.scale);
-    [self applyMoonCrop];
+    sender.scale = 1;   // to slow down
 }
 
 - (void)rotatedOnImage: (UIRotationGestureRecognizer *)sender
 {
     self.originalImageView.transform = CGAffineTransformRotate(self.originalImageView.transform, sender.rotation);
-    [self applyMoonCrop];
+    sender.rotation = 0;    // to slow down
 }
 
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer {
     return YES;
 }
 
+- (void)onSave:(id)sender {
+    
+    UIImage* visibleImage = [self getVisibleImageFrom:self.containerView];
+    UIImage* maskImage = [self growImage:[UIImage imageNamed:@"rounder"] toSize:self.view.bounds.size];
+    UIImage* finalImage = [self maskImage:visibleImage withMask:maskImage];
+    UIImageWriteToSavedPhotosAlbum(finalImage, nil, nil, nil);
+}
+
 - (UIImage*)getVisibleImageFrom:(UIView*)view {
-    UIGraphicsBeginImageContextWithOptions(view.bounds.size, view.opaque, 0.0f);
-    [view.layer renderInContext:UIGraphicsGetCurrentContext()];
-    //    [view drawViewHierarchyInRect:view.bounds afterScreenUpdates:NO];
+    UIGraphicsBeginImageContextWithOptions(view.bounds.size, view.opaque, [UIScreen mainScreen].scale);
+    [view drawViewHierarchyInRect:view.bounds afterScreenUpdates:NO];
     UIImage * snapshotImage = UIGraphicsGetImageFromCurrentImageContext();
     UIGraphicsEndImageContext();
     return snapshotImage;
 }
 
-- (void)applyMoonCrop {
-    
-    UIImage* visibleImage = [self getVisibleImageFrom:self.containerView];
-    UIImage* maskImage = [self resizeImage:[UIImage imageNamed:@"rounder"] toSize:self.croppedImageView.bounds.size];
-    
-    CALayer *maskLayer = [CALayer layer];
-    [maskLayer setContents:(id)maskImage.CGImage];
-    [maskLayer setFrame:CGRectMake(0.0f, 0.0f, maskImage.size.width, maskImage.size.height)];
-    
-    self.croppedImageView.image = visibleImage;
-    [self.croppedImageView.layer setMask:maskLayer];
-}
-
-- (UIImage*)resizeImage:(UIImage*)sourceImage toSize:(CGSize)size
+- (UIImage*)growImage:(UIImage*)sourceImage toSize:(CGSize)size
 {
-    float oldWidth = sourceImage.size.width;
+    float oldWidth = sourceImage.size.width * [UIScreen mainScreen].scale;
+    float oldHeight = sourceImage.size.height * [UIScreen mainScreen].scale;
     float scaleFactor = 1;//size.width / oldWidth;
     
-    float newHeight = sourceImage.size.height * scaleFactor;
+    float newHeight = oldHeight * scaleFactor;
     float newWidth = oldWidth * scaleFactor;
     
-    UIGraphicsBeginImageContextWithOptions(size, NO, 0.0f);
-    [sourceImage drawInRect:CGRectMake((size.width - newWidth)/2, (size.height - newHeight)/2, newWidth, newHeight)];
+    float width = size.width * [UIScreen mainScreen].scale;
+    float height = size.height * [UIScreen mainScreen].scale;
+    
+    UIGraphicsBeginImageContextWithOptions(CGSizeMake(width, height), NO, [UIScreen mainScreen].scale);
+    [sourceImage drawInRect:CGRectMake((width - newWidth)/2, (height - newHeight)/2, newWidth, newHeight)];
     UIImage *newImage = UIGraphicsGetImageFromCurrentImageContext();
     UIGraphicsEndImageContext();
     return newImage;
+}
+
+- (UIImage*)maskImage:(UIImage *)image withMask:(UIImage *)mask
+{
+    int width = image.size.width * [UIScreen mainScreen].scale;
+    int height = image.size.height * [UIScreen mainScreen].scale;
+    
+    // Create a suitable RGB+alpha bitmap context in BGRA colour space
+    CGColorSpaceRef colourSpace = CGColorSpaceCreateDeviceRGB();
+    unsigned char *memoryPoolForImage = (unsigned char *)calloc(width*height*4, 1);
+    CGContextRef contextForImage = CGBitmapContextCreate(memoryPoolForImage, width, height, 8, width * 4, colourSpace, kCGBitmapByteOrder32Big | kCGImageAlphaPremultipliedLast);
+    
+    unsigned char *memoryPoolForMask = (unsigned char *)calloc(width*height*4, 1);
+    CGContextRef contextForMask = CGBitmapContextCreate(memoryPoolForMask, width, height, 8, width * 4, colourSpace, kCGBitmapByteOrder32Big | kCGImageAlphaPremultipliedLast);
+    
+    CGColorSpaceRelease(colourSpace);
+    
+    // draw the current image to the newly created context
+    CGContextDrawImage(contextForImage, CGRectMake(0, 0, width, height), image.CGImage);
+    CGContextDrawImage(contextForMask, CGRectMake(0, 0, width, height), mask.CGImage);
+    
+    // run through every pixel, a scan line at a time...
+    for(int y = 0; y < height; y++)
+    {
+        // get a pointer to the start of this scan line
+        unsigned char *linePointerForImage = &memoryPoolForImage[y * width * 4];
+        unsigned char *linePointerForMask = &memoryPoolForMask[y * width * 4];
+        
+        // step through the pixels one by one...
+        for(int x = 0; x < width; x++)
+        {
+            // get RGB values. We're dealing with premultiplied alpha
+            // here, so we need to divide by the alpha channel (if it
+            // isn't zero, of course) to get uninflected RGB. We
+            // multiply by 255 to keep precision while still using
+            // integers
+            int r, g, b;
+            if(linePointerForMask[3])
+            {
+                r = linePointerForImage[0] * 255 / linePointerForImage[3];
+                g = linePointerForImage[1] * 255 / linePointerForImage[3];
+                b = linePointerForImage[2] * 255 / linePointerForImage[3];
+            }
+            else
+                r = g = b = 0;
+            
+            linePointerForImage[3] = linePointerForMask[3];
+            
+            // multiply by alpha again, divide by 255 to undo the
+            // scaling before, store the new values and advance
+            // the pointer we're reading pixel data from
+            linePointerForImage[0] = r * linePointerForImage[3] / 255;
+            linePointerForImage[1] = g * linePointerForImage[3] / 255;
+            linePointerForImage[2] = b * linePointerForImage[3] / 255;
+            
+            linePointerForImage += 4;
+            linePointerForMask += 4;
+        }
+    }
+    
+    // get a CG image from the context, wrap that into a
+    // UIImage
+    CGImageRef cgImage = CGBitmapContextCreateImage(contextForImage);
+    UIImage *returnImage = [UIImage imageWithCGImage:cgImage scale:[UIScreen mainScreen].scale orientation:(UIImageOrientationUp)];
+    
+    // clean up
+    CGImageRelease(cgImage);
+    CGContextRelease(contextForImage);
+    CGContextRelease(contextForMask);
+    free(memoryPoolForImage);
+    free(memoryPoolForMask);
+    
+    // and return
+    return returnImage;
+}
+
+- (UIImage *)reverseMaskImage:(UIImage*)sourceImage toSize:(CGSize)size
+{
+    float oldWidth = sourceImage.size.width * [UIScreen mainScreen].scale;
+    float oldHeight = sourceImage.size.height * [UIScreen mainScreen].scale;
+    float scaleFactor = 1;//size.width / oldWidth;
+    
+    float newHeight = oldHeight * scaleFactor;
+    float newWidth = oldWidth * scaleFactor;
+    
+    int width = size.width * [UIScreen mainScreen].scale;
+    int height = size.height * [UIScreen mainScreen].scale;
+    
+    // Create a suitable RGB+alpha bitmap context in BGRA colour space
+    CGColorSpaceRef colourSpace = CGColorSpaceCreateDeviceRGB();
+    unsigned char *memoryPool = (unsigned char *)calloc(width*height*4, 1);
+    CGContextRef context = CGBitmapContextCreate(memoryPool, width, height, 8, width * 4, colourSpace, kCGBitmapByteOrder32Big | kCGImageAlphaPremultipliedLast);
+    CGColorSpaceRelease(colourSpace);
+    
+    // draw the current image to the newly created context
+    CGContextSetRGBFillColor(context, 0, 0, 0, 0.6);
+    CGContextFillRect(context, CGRectMake(0, 0, width, height));
+    CGContextDrawImage(context, CGRectMake((width - newWidth)/2, (height - newHeight)/2, newWidth, newHeight), sourceImage.CGImage);
+    
+    // run through every pixel, a scan line at a time...
+    for(int y = 0; y < height; y++)
+    {
+        // get a pointer to the start of this scan line
+        unsigned char *linePointer = &memoryPool[y * width * 4];
+        
+        // step through the pixels one by one...
+        for(int x = 0; x < width; x++)
+        {
+            // get RGB values. We're dealing with premultiplied alpha
+            // here, so we need to divide by the alpha channel (if it
+            // isn't zero, of course) to get uninflected RGB. We
+            // multiply by 255 to keep precision while still using
+            // integers
+            int r, g, b;
+            if(linePointer[3])
+            {
+                r = linePointer[0] * 255 / linePointer[3];
+                g = linePointer[1] * 255 / linePointer[3];
+                b = linePointer[2] * 255 / linePointer[3];
+            }
+            else
+                r = g = b = 0;
+            
+            linePointer[3] = 1 - linePointer[3];
+            
+            // multiply by alpha again, divide by 255 to undo the
+            // scaling before, store the new values and advance
+            // the pointer we're reading pixel data from
+            linePointer[0] = r * linePointer[3] / 255;
+            linePointer[1] = g * linePointer[3] / 255;
+            linePointer[2] = b * linePointer[3] / 255;
+            
+            linePointer += 4;
+        }
+    }
+    
+    // get a CG image from the context, wrap that into a
+    // UIImage
+    CGImageRef cgImage = CGBitmapContextCreateImage(context);
+    UIImage *returnImage = [UIImage imageWithCGImage:cgImage scale:[UIScreen mainScreen].scale orientation:(UIImageOrientationUp)];
+    
+    // clean up
+    CGImageRelease(cgImage);
+    CGContextRelease(context);
+    free(memoryPool);
+    
+    // and return
+    return returnImage;
 }
 
 @end
