@@ -16,32 +16,32 @@
     BOOL cameraIsReady;
     BOOL justHitCancelledToPreventPresentingCamera;
     CGPoint previousLocation;
-    
-    CGPoint lastPoint; //for pinching
-    CGFloat lastScale; //for pinching
-    
-    CGFloat xStaticDeviationPercentage;
-    CGFloat yStaticDeviationPercentage;
-    
 }
 
 @property (strong, nonatomic) UIImagePickerController *imagePickerController;
 @property (strong, nonatomic) UIImage *takenOrSelectedImage;
-@property (strong, nonatomic) UIImageView *displayView;
-@property (strong, nonatomic) UIImageView *topView;
 
-
+// added by Raymond
+@property (strong, nonatomic) UIView* containerView;
+@property (strong, nonatomic) UIImageView* originalImageView;
+@property (strong, nonatomic) UIView* dimView;
+@property (strong, nonatomic) UIImageView* croppedImageView;
 
 @end
+
+#define TAG_FOR_TOUCHING 1
 
 @implementation TakePhotoViewController
 
 - (void)viewDidLoad {
+    
     [super viewDidLoad];
     // Do any additional setup after loading the view.
     self.view.backgroundColor = [UIColor blackColor];
-    
     [self cameraConfiguration];
+    
+    [self initUIViews];
+    [self initGestureRecognizersTo:self.originalImageView withTag:TAG_FOR_TOUCHING];
     
 }
 
@@ -65,10 +65,10 @@
     //Present the Camera UIImagePicker if no image is taken
     if (!justHitCancelledToPreventPresentingCamera){
         //if (!appDelegate.imageStorageDictionary[@"picture1"]){
-            if (modalPresent == NO){ //checks if the UIImagePickerController is already modally active
-                if (![[self imagePickerController] isBeingDismissed]) [self dismissViewControllerAnimated:NO completion:nil];
-                [self.navigationController presentViewController:self.imagePickerController animated:NO completion:nil];
-            }
+        if (modalPresent == NO){ //checks if the UIImagePickerController is already modally active
+            if (![[self imagePickerController] isBeingDismissed]) [self dismissViewControllerAnimated:NO completion:nil];
+            [self.navigationController presentViewController:self.imagePickerController animated:NO completion:nil];
+        }
         //}
     }
     justHitCancelledToPreventPresentingCamera = NO;
@@ -99,14 +99,13 @@
     {
         self.imagePickerController.showsCameraControls = YES;
     }
-
+    
 }
 
 - (void)cameraIsReady:(NSNotification *)notification
 {
     NSLog(@"Camera is ready...");
     cameraIsReady = YES;
-    
 }
 
 #pragma mark - Delegate methods for ImagePicker
@@ -114,249 +113,18 @@
 - (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary<NSString *,id> *)info
 {
     UIImage *imageTaken =  [info objectForKey:UIImagePickerControllerOriginalImage];
-    self.takenOrSelectedImage = [self resizeImage:imageTaken];
+    self.takenOrSelectedImage = imageTaken;
     
+    self.originalImageView.image = self.takenOrSelectedImage;
     NSLog(@"%@", self.takenOrSelectedImage);
     [self.imagePickerController dismissViewControllerAnimated:YES completion:nil];
     
-    //The methods sets two UIImageViews: a background UIImageView with alpha 0.6, called self.displayView
-    //and a foreground UIImageView with alpha 1.0, called self.topView
-    //A mask is applied to self.topView
-    
-    [self displayImageOnScreen];
-    [self displayImageOnTopView];
-    
-    
-    NSLog(@"edit done");
-}
-
-- (void)displayImageOnScreen
-{
-    self.displayView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.width*1.333333)];
-    self.displayView.image = self.takenOrSelectedImage;
-    self.displayView.tag = 1;
-    self.displayView.contentMode = UIViewContentModeScaleAspectFit;
-    [self.view addSubview:self.displayView];
-    
-    self.displayView.userInteractionEnabled = YES;
-    self.displayView.alpha = 0.6;
-
-    UIPinchGestureRecognizer *pinchGesture = [[UIPinchGestureRecognizer alloc] initWithTarget:self action:@selector(pinchedOnImage:)];
-    pinchGesture.delegate = self;
-    [self.displayView addGestureRecognizer:pinchGesture];
-   
-    UIRotationGestureRecognizer *rotationGesture = [[UIRotationGestureRecognizer alloc] initWithTarget:self action:@selector(rotatedOnImage:)];
-    rotationGesture.delegate = self;
-    [self.displayView addGestureRecognizer:rotationGesture];
-
-    [self findAbsoluteDistanceToCenterWithPoint]; //doing it for the first time
-}
-
-- (void)displayImageOnTopView
-{
-    self.topView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.width*1.333333)];
-    self.topView.image = self.takenOrSelectedImage;
-    self.topView.tag = 2;
-    self.topView.contentMode = UIViewContentModeScaleAspectFit;
-    [self.view addSubview:self.topView];
-    
-    [self applyMaskToImage];
-}
-
-
-//Touch methods for panning image
-
--(void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
-{
-    UITouch *touch = [touches anyObject];
-    if([touch.view isKindOfClass:[UIImageView class]] && touch.view.tag == 1){
-        previousLocation = [touch locationInView:self.view];
-        //[self applyMaskToImage];
-    }
-    
-}
-
-- (void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
-{
-    UITouch *touch = [touches anyObject];
-    if([touch.view isKindOfClass:[UIImageView class]] && touch.view.tag == 1){
-        
-        CGPoint location = [touch locationInView:self.view];
-        
-        float xDistanceFromBefore = location.x - previousLocation.x;
-        float yDistanceFromBefore = location.y - previousLocation.y;
-        
-        self.displayView.center = CGPointMake(self.displayView.center.x + xDistanceFromBefore,
-                                              self.displayView.center.y + yDistanceFromBefore);
-        
-        self.topView.center = CGPointMake(self.topView.center.x + xDistanceFromBefore,
-                                          self.topView.center.y + yDistanceFromBefore);
-        
-        
-        [self findAbsoluteDistanceToCenterWithPoint]; //see comments in method
-        [self applyMaskToImage];
-        
-        
-        previousLocation = location;
-    }
-}
-
-- (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
-{
-    UITouch *touch = [touches anyObject];
-    if([touch.view isKindOfClass:[UIImageView class]] && touch.view.tag == 1){
-        previousLocation = [touch locationInView:self.view];
-    }
-}
-
-//Pinch methods for zooming image
-
-- (void)pinchedOnImage: (UIPinchGestureRecognizer *)sender
-{
-    //sender.view.transform = CGAffineTransformScale(sender.view.transform, sender.scale, sender.scale);
-    self.displayView.transform = CGAffineTransformScale(self.displayView.transform, sender.scale, sender.scale);
-    self.topView.transform = CGAffineTransformScale(self.topView.transform, sender.scale, sender.scale);
-    
-    sender.scale = 1;
-    [self applyMaskToImage];
-}
-
-- (void)rotatedOnImage: (UIRotationGestureRecognizer *)sender
-{
-    //sender.view.transform = CGAffineTransformRotate(sender.view.transform, sender.rotation);
-    self.displayView.transform = CGAffineTransformRotate(self.displayView.transform, sender.rotation);
-    self.topView.transform = CGAffineTransformRotate(self.topView.transform, sender.rotation);
-    
-    sender.rotation = 0;
-    [self applyMaskToImage];
-}
-
-- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer {
-    return YES;
-}
-
-
-
-- (void)findAbsoluteDistanceToCenterWithPoint
-{
-    //This method finds the static center the UIImageView prior to any changes made to them
-    //The "1.333333" is used when originally displaying the UIImageView and is added here
-    //It calculates the PERCENTAGE change of how much the user has panned the UIImageView from the center
-    
-    CGPoint staticCenter = CGPointMake(self.view.frame.size.width/2, (self.view.frame.size.width*1.333333)/2);
-    
-    float xDistanceChange = (self.displayView.center.x - staticCenter.x)/staticCenter.x;
-    float yDistanceChange = (self.displayView.center.y - staticCenter.y)/staticCenter.y;
-    
-    xStaticDeviationPercentage = xDistanceChange;
-    yStaticDeviationPercentage = yDistanceChange;
-    
-    NSLog(@"Percentage change: X:%f, Y:%f", xStaticDeviationPercentage, yStaticDeviationPercentage);
-}
-
-
-
-- (void)applyMaskToImage
-{
-    for (CALayer *sublayer in self.topView.layer.sublayers){
-        [sublayer removeFromSuperlayer];
-    }
-    
-    UIImage *moonImage = [UIImage imageNamed:@"rounder"];
-    CALayer *maskLayer = [CALayer layer];
-    [maskLayer setContents:(id)moonImage.CGImage];
-    [maskLayer setFrame:CGRectMake(0.0f, 0.0f, moonImage.size.width, moonImage.size.height)];
-    
-    //Points the layer in the middle of the displayView
-    
-    maskLayer.position = (CGPoint){CGRectGetMidX(self.topView.bounds), CGRectGetMidY(self.topView.bounds)};
-    
-    //Explaination below:
-    //0.5 anchors the point in the center of the image
-    //The two floats xStaticDeviationPercentage and yStaticDeviationPercentage
-    //is used to keep the mask appear in the center of the view while the user pans the image
-    //At the moment, this is not working
-    
-    maskLayer.anchorPoint = CGPointMake(0.5 + xStaticDeviationPercentage,
-                                        0.5 + yStaticDeviationPercentage); ///(1/1.333333) ignore this
-    [self.topView.layer setMask:maskLayer];
-    
+    [self applyMoonCrop];
 }
 
 - (void)imagePickerControllerDidCancel:(UIImagePickerController *)picker
 {
     NSLog(@"Photo cancelled");
-    
-}
-
--(UIImage *)resizeImage:(UIImage *)image
-{
-    float actualHeight = image.size.height;
-    float actualWidth = image.size.width;
-    
-    float maxHeight = self.view.frame.size.width*1.333333*2;
-    float maxWidth = self.view.frame.size.width*2;
-    
-    float imgRatio = actualWidth/actualHeight;
-    float maxRatio = maxWidth/maxHeight;
-    
-    if (actualHeight > maxHeight || actualWidth > maxWidth)
-    {
-        if(imgRatio < maxRatio)
-        {
-            //adjust width according to maxHeight
-            imgRatio = maxHeight / actualHeight;
-            actualWidth = imgRatio * actualWidth;
-            actualHeight = maxHeight;
-        }
-        else if(imgRatio > maxRatio)
-        {
-            //adjust height according to maxWidth
-            imgRatio = maxWidth / actualWidth;
-            actualHeight = imgRatio * actualHeight;
-            actualWidth = maxWidth;
-        }
-        else
-        {
-            actualHeight = maxHeight;
-            actualWidth = maxWidth;
-        }
-    }
-    
-    CGRect rect = CGRectMake(0.0, 0.0, actualWidth, actualHeight);
-    UIGraphicsBeginImageContext(rect.size);
-    [image drawInRect:rect];
-    UIImage *img = UIGraphicsGetImageFromCurrentImageContext();
-    NSData *imageData = UIImagePNGRepresentation(img);
-    UIGraphicsEndImageContext();
-    
-    return [UIImage imageWithData:imageData];
-    
-}
-
-
-
-- (UIImage *)createImageFromImage:(UIImage *)image
-                    withMaskImage:(UIImage *)mask {
-    CGImageRef imageRef = image.CGImage;
-    CGImageRef maskRef = mask.CGImage;
-    
-    CGImageRef imageMask = CGImageMaskCreate(CGImageGetWidth(maskRef),
-                                             CGImageGetHeight(maskRef),
-                                             CGImageGetBitsPerComponent(maskRef),
-                                             CGImageGetBitsPerPixel(maskRef),
-                                             CGImageGetBytesPerRow(maskRef),
-                                             CGImageGetDataProvider(maskRef),
-                                             NULL,
-                                             YES);
-    
-    CGImageRef maskedReference = CGImageCreateWithMask(imageRef, imageMask);
-    CGImageRelease(imageMask);
-    
-    UIImage *maskedImage = [UIImage imageWithCGImage:maskedReference];
-    CGImageRelease(maskedReference);
-    
-    return maskedImage;
 }
 
 - (IBAction)didTapOnTakePhoto:(UIButton *)sender {
@@ -373,4 +141,160 @@
 
 - (IBAction)didTapCameraTurn:(UIButton *)sender {
 }
+
+- (void)initUIViews {
+    
+    // create necessary views
+    // see storyboard as reference
+    /*
+     containerView
+     originalImageView
+     dimView
+     croppedImageView
+     */
+    
+    self.containerView = [[UIView alloc] initWithFrame:self.view.bounds];
+    self.containerView.backgroundColor = [UIColor clearColor];
+    [self.view addSubview:self.containerView];
+    
+    self.originalImageView = [[UIImageView alloc] initWithFrame:self.containerView.bounds];
+    self.originalImageView.contentMode = UIViewContentModeScaleAspectFit;
+    self.originalImageView.userInteractionEnabled = YES;
+    [self.containerView addSubview:self.originalImageView];
+    
+    self.dimView = [[UIView alloc] initWithFrame:self.view.bounds];
+    self.dimView.backgroundColor = [UIColor colorWithWhite:0 alpha:0.6];
+    self.dimView.userInteractionEnabled = NO;
+    [self.view addSubview:self.dimView];
+    
+    self.croppedImageView = [[UIImageView alloc] initWithFrame:self.view.bounds];
+    self.croppedImageView.contentMode = UIViewContentModeScaleAspectFit;
+    self.croppedImageView.userInteractionEnabled = NO;
+    [self.view addSubview:self.croppedImageView];
+}
+
+- (void)initGestureRecognizersTo:(UIView*)view withTag:(int)tag {
+    
+    view.tag = tag;
+    UIPinchGestureRecognizer *pinchGesture = [[UIPinchGestureRecognizer alloc] initWithTarget:self action:@selector(pinchedOnImage:)];
+    pinchGesture.delegate = self;
+    [view addGestureRecognizer:pinchGesture];
+    
+    UIRotationGestureRecognizer *rotationGesture = [[UIRotationGestureRecognizer alloc] initWithTarget:self action:@selector(rotatedOnImage:)];
+    rotationGesture.delegate = self;
+    [view addGestureRecognizer:rotationGesture];
+}
+
+- (void)viewDidLayoutSubviews {
+    
+    self.containerView.frame = self.view.bounds;
+    self.originalImageView.frame = self.containerView.bounds;
+    self.dimView.frame = self.view.bounds;
+    self.croppedImageView.frame = self.view.bounds;
+    
+    [self applyMoonCrop];
+}
+
+//Touch methods for panning image
+
+-(void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
+{
+    UITouch *touch = [touches anyObject];
+    if([touch.view isKindOfClass:[UIImageView class]] && touch.view.tag == TAG_FOR_TOUCHING){
+        previousLocation = [touch locationInView:self.view];
+        //[self applyMaskToImage];
+    }
+    
+}
+
+- (void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
+{
+    UITouch *touch = [touches anyObject];
+    if([touch.view isKindOfClass:[UIImageView class]] && touch.view.tag == TAG_FOR_TOUCHING){
+        
+        CGPoint location = [touch locationInView:self.view];
+        
+        float xDistanceFromBefore = location.x - previousLocation.x;
+        float yDistanceFromBefore = location.y - previousLocation.y;
+        
+        self.originalImageView.center = CGPointMake(self.originalImageView.center.x + xDistanceFromBefore,
+                                                    self.originalImageView.center.y + yDistanceFromBefore);
+        
+        previousLocation = location;
+        [self applyMoonCrop];
+        //        [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(applyMoonCrop) object:nil];
+        //        [self performSelector:@selector(applyMoonCrop) withObject:nil afterDelay:0.05];
+    }
+}
+
+- (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
+{
+    UITouch *touch = [touches anyObject];
+    if([touch.view isKindOfClass:[UIImageView class]] && touch.view.tag == 1){
+        previousLocation = [touch locationInView:self.view];
+        [self applyMoonCrop];
+    }
+}
+
+- (void)touchesCancelled:(NSSet<UITouch *> *)touches withEvent:(nullable UIEvent *)event {
+    [self applyMoonCrop];
+}
+
+- (void)touchesEstimatedPropertiesUpdated:(NSSet<UITouch *> *)touches NS_AVAILABLE_IOS(9_1) {
+    [self applyMoonCrop];
+}
+
+- (void)pinchedOnImage: (UIPinchGestureRecognizer *)sender
+{
+    self.originalImageView.transform = CGAffineTransformScale(self.originalImageView.transform, sender.scale, sender.scale);
+    [self applyMoonCrop];
+}
+
+- (void)rotatedOnImage: (UIRotationGestureRecognizer *)sender
+{
+    self.originalImageView.transform = CGAffineTransformRotate(self.originalImageView.transform, sender.rotation);
+    [self applyMoonCrop];
+}
+
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer {
+    return YES;
+}
+
+- (UIImage*)getVisibleImageFrom:(UIView*)view {
+    UIGraphicsBeginImageContextWithOptions(view.bounds.size, view.opaque, 0.0f);
+    [view.layer renderInContext:UIGraphicsGetCurrentContext()];
+    //    [view drawViewHierarchyInRect:view.bounds afterScreenUpdates:NO];
+    UIImage * snapshotImage = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    return snapshotImage;
+}
+
+- (void)applyMoonCrop {
+    
+    UIImage* visibleImage = [self getVisibleImageFrom:self.containerView];
+    UIImage* maskImage = [self resizeImage:[UIImage imageNamed:@"rounder"] toSize:self.croppedImageView.bounds.size];
+    
+    CALayer *maskLayer = [CALayer layer];
+    [maskLayer setContents:(id)maskImage.CGImage];
+    [maskLayer setFrame:CGRectMake(0.0f, 0.0f, maskImage.size.width, maskImage.size.height)];
+    
+    self.croppedImageView.image = visibleImage;
+    [self.croppedImageView.layer setMask:maskLayer];
+}
+
+- (UIImage*)resizeImage:(UIImage*)sourceImage toSize:(CGSize)size
+{
+    float oldWidth = sourceImage.size.width;
+    float scaleFactor = 1;//size.width / oldWidth;
+    
+    float newHeight = sourceImage.size.height * scaleFactor;
+    float newWidth = oldWidth * scaleFactor;
+    
+    UIGraphicsBeginImageContextWithOptions(size, NO, 0.0f);
+    [sourceImage drawInRect:CGRectMake((size.width - newWidth)/2, (size.height - newHeight)/2, newWidth, newHeight)];
+    UIImage *newImage = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    return newImage;
+}
+
 @end
